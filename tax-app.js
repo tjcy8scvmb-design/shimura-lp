@@ -44,6 +44,7 @@
 
   var state = loadState();
   var receiptPreviewUrl = null;
+  var receiptOcrToken = 0;
 
   /* ── 状態 ── */
 
@@ -305,8 +306,8 @@
     return { base: base, deduction: deduction, incomeTax: incomeTax, residentTax: residentTax, total: incomeTax + residentTax };
   }
 
-  function detectCategory(payee, note) {
-    var text = ((payee || "") + " " + (note || "")).toLowerCase();
+  function detectCategory(payee, note, extraText) {
+    var text = ((payee || "") + " " + (note || "") + " " + (extraText || "")).toLowerCase();
     for (var i = 0; i < AUTO_SORT_RULES.length; i++) {
       var rule = AUTO_SORT_RULES[i];
       for (var j = 0; j < rule.keys.length; j++) {
@@ -314,6 +315,305 @@
       }
     }
     return "その他";
+  }
+
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function reiwaToYear(r) {
+    return 2018 + parseInt(r, 10);
+  }
+
+  function heiseiToYear(h) {
+    return 1988 + parseInt(h, 10);
+  }
+
+  function toIsoDate(y, m, d) {
+    y = parseInt(y, 10);
+    m = parseInt(m, 10);
+    d = parseInt(d, 10);
+    if (y < 100) y = y >= 50 ? 1900 + y : 2000 + y;
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+    return y + "-" + pad2(m) + "-" + pad2(d);
+  }
+
+  function parseNumbersFromLine(line) {
+    var found = [];
+    var re = /[¥￥]\s*(\d{1,3}(?:,\d{3})*|\d+)|(\d{1,3}(?:,\d{3})*|\d+)\s*円/g;
+    var m;
+    while ((m = re.exec(line)) !== null) {
+      var raw = (m[1] || m[2] || "").replace(/,/g, "");
+      var v = parseInt(raw, 10);
+      if (!isNaN(v) && v >= 1 && v <= 99999999) found.push(v);
+    }
+    return found;
+  }
+
+  function parseReceiptDate(text) {
+    var patterns = [
+      { re: /(\d{4})[\/\.\-年](\d{1,2})[\/\.\-月](\d{1,2})/, fn: function (m) { return toIsoDate(m[1], m[2], m[3]); } },
+      { re: /令和\s*(\d{1,2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: function (m) { return toIsoDate(reiwaToYear(m[1]), m[2], m[3]); } },
+      { re: /平成\s*(\d{1,2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/, fn: function (m) { return toIsoDate(heiseiToYear(m[1]), m[2], m[3]); } },
+      { re: /R\s*(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/i, fn: function (m) { return toIsoDate(reiwaToYear(m[1]), m[2], m[3]); } },
+      { re: /(\d{2})[\/\.\-年](\d{1,2})[\/\.\-月](\d{1,2})/, fn: function (m) { return toIsoDate(m[1], m[2], m[3]); } },
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      var match = text.match(patterns[i].re);
+      if (match) {
+        var iso = patterns[i].fn(match);
+        if (iso) return iso;
+      }
+    }
+    return null;
+  }
+
+  function parseReceiptAmount(text) {
+    var lines = text.split(/\n/);
+    var totalRe = /合\s*計|総\s*計|合計額|お買上|御買上|お支払|税込|税込合計|現金|領収|お買い上げ|ご請求/;
+    var best = 0;
+    var bestScore = -1;
+
+    lines.forEach(function (line, idx) {
+      var nums = parseNumbersFromLine(line);
+      if (!nums.length) return;
+      var score = 0;
+      if (totalRe.test(line)) score += 20;
+      if (/[¥￥]/.test(line)) score += 5;
+      if (idx >= lines.length - 8) score += 3;
+      nums.forEach(function (n) {
+        if (n < 50 || n > 5000000) return;
+        var s = score;
+        if (n >= 100) s += 1;
+        if (s > bestScore || (s === bestScore && n > best)) {
+          bestScore = s;
+          best = n;
+        }
+      });
+    });
+
+    if (best > 0) return best;
+
+    var all = [];
+    lines.forEach(function (line) {
+      parseNumbersFromLine(line).forEach(function (n) {
+        if (n >= 100 && n <= 5000000) all.push(n);
+      });
+    });
+    if (!all.length) return 0;
+    return Math.max.apply(null, all);
+  }
+
+  function isNoisePayeeLine(line) {
+    if (!line || line.length < 2) return true;
+    if (/^\d+$/.test(line.replace(/[\s\-]/g, ""))) return true;
+    if (/TEL|電話|〒|http|領収|レシート|ありがとう|登録番号|インボイス/i.test(line)) return true;
+    if (/^[¥￥\d,\.\s]+$/.test(line)) return true;
+    return false;
+  }
+
+  function parseReceiptPayee(text) {
+    var lines = text.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    for (var i = 0; i < Math.min(lines.length, 8); i++) {
+      var line = lines[i];
+      if (isNoisePayeeLine(line)) continue;
+      if (line.length > 40) line = line.slice(0, 40);
+      return line;
+    }
+    return "";
+  }
+
+  function parseReceiptNote(text) {
+    var itemRe = /給油|ガソリン|軽油|ハイオク|レギュラー|通行料|高速|ETC|駐車|パーキング|洗車|オイル|タイヤ|通信|消耗|外注|委託|軽バン|配送|荷物/;
+    var lines = text.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    for (var i = 0; i < lines.length; i++) {
+      if (itemRe.test(lines[i]) && !/合\s*計|総\s*計/.test(lines[i])) {
+        return lines[i].slice(0, 60);
+      }
+    }
+    for (var j = 0; j < lines.length; j++) {
+      if (lines[j].length >= 4 && !isNoisePayeeLine(lines[j]) && !/合\s*計|総\s*計/.test(lines[j])) {
+        var nums = parseNumbersFromLine(lines[j]);
+        if (nums.length && nums[0] > 500) continue;
+        return lines[j].slice(0, 60);
+      }
+    }
+    return "";
+  }
+
+  function parseReceiptOcrText(text) {
+    text = (text || "").replace(/\r/g, "");
+    return {
+      date: parseReceiptDate(text),
+      payee: parseReceiptPayee(text),
+      amount: parseReceiptAmount(text),
+      note: parseReceiptNote(text),
+      rawText: text,
+    };
+  }
+
+  function preprocessReceiptImage(file, done) {
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var maxW = 1600;
+      var w = img.naturalWidth || img.width;
+      var h = img.naturalHeight || img.height;
+      if (w > maxW) {
+        h = Math.round((h * maxW) / w);
+        w = maxW;
+      }
+      var canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext("2d");
+      if (!ctx) { done(file); return; }
+      ctx.filter = "contrast(1.2) grayscale(1)";
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        function (blob) { done(blob || file); },
+        "image/jpeg",
+        0.9
+      );
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      done(file);
+    };
+    img.src = url;
+  }
+
+  function setReceiptOcrStatus(loading, message, isWarn) {
+    var loadHint = document.getElementById("receiptLoadHint");
+    var autoHint = document.getElementById("autoCatHint");
+    if (loadHint) {
+      if (loading) {
+        loadHint.hidden = false;
+        loadHint.textContent = "レシートを読み取り中です…（数十秒かかる場合があります）";
+      } else if (message) {
+        loadHint.hidden = false;
+        loadHint.textContent = message;
+      }
+    }
+    if (autoHint && loading) autoHint.hidden = true;
+    if (autoHint && isWarn && message) {
+      autoHint.hidden = false;
+      autoHint.textContent = message;
+    }
+  }
+
+  function applyParsedReceipt(parsed, token) {
+    if (token !== receiptOcrToken) return;
+
+    var filled = { date: false, payee: false, amount: false, note: false, category: false };
+    var dateEl = document.getElementById("receiptDate");
+    var payeeEl = document.getElementById("receiptPayee");
+    var amountEl = document.getElementById("receiptAmount");
+    var noteEl = document.getElementById("receiptNote");
+    var catEl = document.getElementById("receiptCategory");
+
+    if (parsed.date && dateEl) {
+      dateEl.value = parsed.date;
+      filled.date = true;
+    } else if (dateEl && !dateEl.value) {
+      dateEl.value = todayIsoDate();
+    }
+
+    if (parsed.payee && payeeEl) {
+      payeeEl.value = parsed.payee;
+      filled.payee = true;
+    }
+
+    if (parsed.amount > 0 && amountEl) {
+      amountEl.value = String(parsed.amount);
+      filled.amount = true;
+    }
+
+    if (parsed.note && noteEl) {
+      noteEl.value = parsed.note;
+      filled.note = true;
+    }
+
+    var cat = detectCategory(parsed.payee, parsed.note, parsed.rawText);
+    if (catEl) {
+      catEl.value = cat;
+      filled.category = true;
+    }
+
+    var missing = [];
+    if (!filled.date) missing.push("日付");
+    if (!filled.payee) missing.push("支払先");
+    if (!filled.amount) missing.push("金額");
+    if (!filled.note) missing.push("内容");
+
+    var autoHint = document.getElementById("autoCatHint");
+    if (autoHint) {
+      autoHint.hidden = false;
+      var account = CATEGORY_TO_ACCOUNT[cat] || "雑費";
+      if (missing.length) {
+        autoHint.textContent =
+          "読み取れなかった項目は手入力してください（" +
+          missing.join("・") +
+          "）。カテゴリ: " + cat + "（勘定科目: " + account + "）";
+      } else {
+        autoHint.textContent =
+          "読み取り完了。カテゴリ: " + cat + "（勘定科目: " + account + "）— 必要なら修正してください";
+      }
+    }
+
+    setReceiptOcrStatus(
+      false,
+      missing.length
+        ? "画像を読み込みました。読み取れなかった項目は手入力してください。"
+        : "画像を読み込みました。内容を確認して登録してください。",
+      false
+    );
+  }
+
+  function runReceiptOcr(file) {
+    if (typeof Tesseract === "undefined") {
+      setReceiptOcrStatus(false, "画像を読み込みました。OCRを利用できないため手入力してください。", true);
+      return;
+    }
+
+    var token = ++receiptOcrToken;
+    setReceiptOcrStatus(true);
+
+    preprocessReceiptImage(file, function (blob) {
+      if (token !== receiptOcrToken) return;
+
+      Tesseract.recognize(blob, "jpn", {
+        logger: function (m) {
+          if (token !== receiptOcrToken) return;
+          if (m.status === "recognizing text" && m.progress) {
+            var pct = Math.round(m.progress * 100);
+            var loadHint = document.getElementById("receiptLoadHint");
+            if (loadHint) {
+              loadHint.textContent = "レシートを読み取り中です… " + pct + "%";
+            }
+          }
+        },
+      })
+        .then(function (result) {
+          if (token !== receiptOcrToken) return;
+          var parsed = parseReceiptOcrText(result.data.text || "");
+          applyParsedReceipt(parsed, token);
+        })
+        .catch(function () {
+          if (token !== receiptOcrToken) return;
+          setReceiptOcrStatus(
+            false,
+            "読み取れなかった項目は手入力してください",
+            true
+          );
+          var loadHint = document.getElementById("receiptLoadHint");
+          if (loadHint) {
+            loadHint.hidden = false;
+            loadHint.textContent = "画像を読み込みました。読み取れなかった項目は手入力してください。";
+          }
+        });
+    });
   }
 
   /* ── 起動画面 ── */
@@ -623,13 +923,16 @@
   }
 
   function clearReceiptImage() {
+    receiptOcrToken += 1;
     if (receiptPreviewUrl) { URL.revokeObjectURL(receiptPreviewUrl); receiptPreviewUrl = null; }
     var box = document.getElementById("receiptPreviewBox");
     var img = document.getElementById("receiptPreviewImg");
     var hint = document.getElementById("receiptLoadHint");
+    var autoHint = document.getElementById("autoCatHint");
     if (img) img.removeAttribute("src");
     if (box) box.hidden = true;
     if (hint) hint.hidden = true;
+    if (autoHint) autoHint.hidden = true;
     ["receiptFile", "receiptCamera"].forEach(function (id) {
       var f = document.getElementById(id);
       if (f) f.value = "";
@@ -643,14 +946,20 @@
       showMessage("画像ファイルを選んでください", true, "receiptSaveMessage");
       return;
     }
-    clearReceiptImage();
+    receiptOcrToken += 1;
+    if (receiptPreviewUrl) { URL.revokeObjectURL(receiptPreviewUrl); receiptPreviewUrl = null; }
+    document.getElementById("receiptPayee").value = "";
+    document.getElementById("receiptAmount").value = "";
+    document.getElementById("receiptNote").value = "";
+    document.getElementById("receiptCategory").value = "ガソリン";
+    var autoHint = document.getElementById("autoCatHint");
+    if (autoHint) autoHint.hidden = true;
+
     receiptPreviewUrl = URL.createObjectURL(file);
     document.getElementById("receiptPreviewImg").src = receiptPreviewUrl;
     document.getElementById("receiptPreviewBox").hidden = false;
-    document.getElementById("receiptLoadHint").hidden = false;
     document.getElementById("receiptForm").classList.add("is-image-loaded");
-    var dateEl = document.getElementById("receiptDate");
-    if (dateEl && !dateEl.value) dateEl.value = todayIsoDate();
+    runReceiptOcr(file);
   }
 
   function resetReceiptForm(keepDate) {
