@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="志村運送｜個人事業主ドライバー向け 青色・白色申告 売上・経費・帳票作成" />
+  <title>確定申告サポート｜志村運送</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;800&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="tax-app.css" />
+</head>
+<body>
+  <div class="tax-app__bg" aria-hidden="true"></div>
+
+  <!-- 起動画面：申告区分選択 -->
+  <div class="tax-startup" id="startupScreen">
+    <div class="tax-startup__panel">
+      <p class="tax-startup__logo">志村運送</p>
+      <h1 class="tax-startup__title">確定申告サポート</h1>
+      <p class="tax-startup__lead">軽貨物事業者向け。申告区分を選んで始めてください。</p>
+
+      <fieldset class="tax-startup__choices">
+        <legend class="sr-only">申告区分</legend>
+        <label class="tax-choice-card">
+          <input type="radio" name="filingType" value="blue" checked />
+          <span class="tax-choice-card__box">
+            <span class="tax-choice-card__title">青色申告</span>
+            <span class="tax-choice-card__desc">青色申告決算書・損益計算書・貸借対照表・確定申告書B</span>
+          </span>
+        </label>
+        <label class="tax-choice-card">
+          <input type="radio" name="filingType" value="white" />
+          <span class="tax-choice-card__box">
+            <span class="tax-choice-card__title">白色申告</span>
+            <span class="tax-choice-card__desc">収支内訳書・確定申告書B</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <form class="tax-form tax-startup__profile" id="startupProfileForm">
+        <label class="tax-field">
+          <span>事業者名（屋号）</span>
+          <input type="text" id="startupBusinessName" class="tax-input" placeholder="例：志村運送" />
+        </label>
+        <label class="tax-field">
+          <span>氏名</span>
+          <input type="text" id="startupOwnerName" class="tax-input" placeholder="例：山田 太郎" />
+        </label>
+        <label class="tax-field" id="blueDeductionField">
+          <span>青色申告特別控除（円）</span>
+          <select id="startupBlueDeduction" class="tax-select tax-select--full">
+            <option value="650000">65万円控除</option>
+            <option value="550000">55万円控除</option>
+            <option value="100000">10万円控除</option>
+          </select>
+        </label>
+        <button type="submit" class="tax-btn tax-btn--primary">はじめる</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="tax-app-shell" id="appShell" hidden>
+    <header class="tax-header">
+      <a href="index.html" class="tax-header__back">← 求人ページへ</a>
+      <div class="tax-header__brand">
+        <span class="tax-header__logo">志村運送</span>
+        <span class="tax-header__sub" id="headerFilingBadge">青色申告</span>
+      </div>
+      <button type="button" class="tax-header__settings" id="openSettingsBtn" aria-label="設定">⚙</button>
+    </header>
+
+    <nav class="tax-nav" aria-label="メニュー">
+      <button type="button" class="tax-nav__btn is-active" data-view="home">トップ</button>
+      <button type="button" class="tax-nav__btn" data-view="input">入力</button>
+      <button type="button" class="tax-nav__btn" data-view="receipt">レシート</button>
+      <button type="button" class="tax-nav__btn" data-view="sort">仕分け</button>
+      <button type="button" class="tax-nav__btn" data-view="assets">固定資産</button>
+      <button type="button" class="tax-nav__btn" data-view="docs">帳票</button>
+      <button type="button" class="tax-nav__btn" data-view="list">一覧</button>
+      <button type="button" class="tax-nav__btn" data-view="year">まとめ</button>
+    </nav>
+
+    <main class="tax-main">
+      <!-- トップ -->
+      <section class="tax-view is-active" id="view-home" data-view="home">
+        <h1 class="tax-hero__title">軽貨物ドライバーの経理</h1>
+        <p class="tax-hero__lead" id="homeLead">
+          売上・経費を記録し、<span id="homeFilingLabel">青色申告</span>の帳票を作成できます。
+        </p>
+
+        <div class="tax-cards">
+          <article class="tax-card tax-card--highlight">
+            <p class="tax-card__label">今年の利益（目安）</p>
+            <p class="tax-card__value" id="homeAnnualProfit">¥0</p>
+          </article>
+          <article class="tax-card">
+            <p class="tax-card__label">税金の目安（合計）</p>
+            <p class="tax-card__value tax-card__value--sm" id="homeTaxEstimate">¥0</p>
+          </article>
+        </div>
+
+        <div class="tax-actions">
+          <button type="button" class="tax-btn tax-btn--primary" data-go="input">今月の数字を入力</button>
+          <button type="button" class="tax-btn tax-btn--ghost" data-go="receipt">レシートを登録</button>
+          <button type="button" class="tax-btn tax-btn--ghost" data-go="docs">帳票を作成</button>
+          <button type="button" class="tax-btn tax-btn--ghost" data-go="assets">固定資産を管理</button>
+        </div>
+
+        <p class="tax-note">データはこの端末内だけに保存されます（インターネットに送りません）。</p>
+      </section>
+
+      <!-- 今月の入力 -->
+      <section class="tax-view" id="view-input" data-view="input" hidden>
+        <h2 class="tax-view__title">今月の入力</h2>
+        <p class="tax-view__desc">金額は円で入力（カンマなしでOK）</p>
+
+        <form class="tax-form" id="monthForm">
+          <label class="tax-field">
+            <span>対象の年</span>
+            <select id="inputYear" class="tax-select"></select>
+          </label>
+          <label class="tax-field">
+            <span>対象の月</span>
+            <select id="inputMonth" class="tax-select"></select>
+          </label>
+          <label class="tax-field">
+            <span>売上（入ってきたお金）</span>
+            <input type="number" id="sales" class="tax-input" min="0" step="1" inputmode="numeric" placeholder="例：450000" />
+          </label>
+          <label class="tax-field">
+            <span>経費（ガソリン・高速・消耗品など）</span>
+            <input type="number" id="expenses" class="tax-input" min="0" step="1" inputmode="numeric" placeholder="例：80000" />
+          </label>
+          <label class="tax-field">
+            <span>外注費（他社・仲間への支払い）</span>
+            <input type="number" id="outsourcing" class="tax-input" min="0" step="1" inputmode="numeric" placeholder="例：0" />
+          </label>
+          <label class="tax-field">
+            <span>固定費（リース・保険・倉庫など）</span>
+            <input type="number" id="fixed" class="tax-input" min="0" step="1" inputmode="numeric" placeholder="例：50000" />
+          </label>
+
+          <div class="tax-result-box">
+            <p class="tax-result-box__label">この月の利益</p>
+            <p class="tax-result-box__value" id="monthProfitPreview">¥0</p>
+            <p class="tax-result-box__hint">利益 ＝ 売上 − 経費 − 外注費 − 固定費 − 減価償却</p>
+          </div>
+
+          <div class="tax-form__actions">
+            <button type="submit" class="tax-btn tax-btn--primary">保存する</button>
+            <button type="button" class="tax-btn tax-btn--danger" id="deleteMonthBtn">この月のデータを削除</button>
+          </div>
+        </form>
+
+        <p class="tax-save-msg" id="saveMessage" role="status" hidden></p>
+        <div class="tax-receipt-month-summary" id="inputReceiptSummary" hidden>
+          <p class="tax-receipt-month-summary__title">この月のレシート登録</p>
+          <p class="tax-receipt-month-summary__val" id="inputReceiptTotal">¥0（0件）</p>
+        </div>
+      </section>
+
+      <!-- レシート読取 -->
+      <section class="tax-view" id="view-receipt" data-view="receipt" hidden>
+        <h2 class="tax-view__title">レシート読取</h2>
+        <p class="tax-view__desc">
+          写真を読み込み、内容を確認して登録。支払先・内容からカテゴリを自動仕分けします。
+        </p>
+
+        <div class="tax-upload-grid">
+          <label class="tax-upload-btn">
+            <input type="file" id="receiptFile" accept="image/*" hidden />
+            <span class="tax-upload-btn__icon" aria-hidden="true">📁</span>
+            <span class="tax-upload-btn__text">写真を選ぶ</span>
+          </label>
+          <label class="tax-upload-btn tax-upload-btn--camera">
+            <input type="file" id="receiptCamera" accept="image/*" capture="environment" hidden />
+            <span class="tax-upload-btn__icon" aria-hidden="true">📷</span>
+            <span class="tax-upload-btn__text">カメラで撮影</span>
+          </label>
+        </div>
+
+        <div class="tax-receipt-preview" id="receiptPreviewBox" hidden>
+          <img id="receiptPreviewImg" class="tax-receipt-preview__img" alt="レシートのプレビュー" />
+          <button type="button" class="tax-receipt-preview__clear" id="clearReceiptImage">画像をクリア</button>
+        </div>
+
+        <p class="tax-receipt-hint" id="receiptLoadHint" hidden>
+          画像を読み込みました。下の欄を確認・修正して登録してください。
+        </p>
+        <p class="tax-auto-cat" id="autoCatHint" hidden></p>
+
+        <form class="tax-form" id="receiptForm">
+          <label class="tax-field">
+            <span>日付</span>
+            <input type="date" id="receiptDate" class="tax-input" required />
+          </label>
+          <label class="tax-field">
+            <span>支払先（お店・会社名）</span>
+            <input type="text" id="receiptPayee" class="tax-input" placeholder="例：ENEOS ○○店" autocomplete="organization" />
+          </label>
+          <label class="tax-field">
+            <span>金額（円）</span>
+            <input type="number" id="receiptAmount" class="tax-input" min="0" step="1" inputmode="numeric" placeholder="例：5280" required />
+          </label>
+          <label class="tax-field">
+            <span>内容（メモ）</span>
+            <input type="text" id="receiptNote" class="tax-input" placeholder="例：ガソリン給油" />
+          </label>
+          <label class="tax-field">
+            <span>カテゴリ（自動仕分け・手修正可）</span>
+            <select id="receiptCategory" class="tax-select tax-select--full" required></select>
+          </label>
+          <button type="submit" class="tax-btn tax-btn--primary">経費として登録</button>
+        </form>
+
+        <p class="tax-save-msg" id="receiptSaveMessage" role="status" hidden></p>
+
+        <div class="tax-receipt-history">
+          <h3 class="tax-receipt-history__title">登録済みレシート</h3>
+          <label class="tax-field tax-field--inline">
+            <span>表示する年月</span>
+            <select id="receiptHistoryYear" class="tax-select"></select>
+            <select id="receiptHistoryMonth" class="tax-select"></select>
+          </label>
+          <ul class="tax-receipt-list" id="receiptHistoryList"></ul>
+          <p class="tax-empty" id="receiptHistoryEmpty" hidden>この月のレシートはまだありません。</p>
+        </div>
+      </section>
+
+      <!-- 仕分け -->
+      <section class="tax-view" id="view-sort" data-view="sort" hidden>
+        <h2 class="tax-view__title">経費の自動仕分け</h2>
+        <p class="tax-view__desc">レシート登録分を軽貨物向けカテゴリ別に集計しています。</p>
+        <label class="tax-field tax-field--inline">
+          <span>対象の年</span>
+          <select id="sortYear" class="tax-select"></select>
+        </label>
+        <div class="tax-table-wrap">
+          <table class="tax-table">
+            <thead>
+              <tr>
+                <th>カテゴリ</th>
+                <th>勘定科目</th>
+                <th>金額</th>
+              </tr>
+            </thead>
+            <tbody id="sortTableBody"></tbody>
+            <tfoot>
+              <tr class="tax-table__foot">
+                <td colspan="2">経費合計（仕分け）</td>
+                <td id="sortTotal">¥0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="tax-note">手入力の経費・固定費・減価償却は帳票作成時に別途加算されます。</p>
+      </section>
+
+      <!-- 固定資産 -->
+      <section class="tax-view" id="view-assets" data-view="assets" hidden>
+        <h2 class="tax-view__title">固定資産・減価償却</h2>
+        <p class="tax-view__desc">車両・機器などを登録すると、定額法で年間償却費を自動計算します。</p>
+
+        <form class="tax-form" id="assetForm">
+          <label class="tax-field">
+            <span>資産名</span>
+            <input type="text" id="assetName" class="tax-input" placeholder="例：軽バン（ハイゼット）" required />
+          </label>
+          <label class="tax-field">
+            <span>区分</span>
+            <select id="assetCategory" class="tax-select tax-select--full">
+              <option value="車両">車両</option>
+              <option value="車両器具">車両運搬具</option>
+              <option value="器具備品">器具備品</option>
+              <option value="その他">その他</option>
+            </select>
+          </label>
+          <label class="tax-field">
+            <span>取得日</span>
+            <input type="date" id="assetPurchaseDate" class="tax-input" required />
+          </label>
+          <label class="tax-field">
+            <span>取得価額（円）</span>
+            <input type="number" id="assetCost" class="tax-input" min="1" step="1" inputmode="numeric" placeholder="例：1500000" required />
+          </label>
+          <label class="tax-field">
+            <span>耐用年数（年）</span>
+            <input type="number" id="assetLife" class="tax-input" min="1" max="50" step="1" value="4" required />
+          </label>
+          <label class="tax-field">
+            <span>償却方法</span>
+            <select id="assetMethod" class="tax-select tax-select--full">
+              <option value="straight">定額法</option>
+            </select>
+          </label>
+          <button type="submit" class="tax-btn tax-btn--primary">固定資産を登録</button>
+        </form>
+
+        <p class="tax-save-msg" id="assetSaveMessage" role="status" hidden></p>
+
+        <label class="tax-field tax-field--inline">
+          <span>償却計算の年</span>
+          <select id="assetYear" class="tax-select"></select>
+        </label>
+
+        <ul class="tax-asset-list" id="assetList"></ul>
+        <p class="tax-empty" id="assetEmpty" hidden>固定資産はまだ登録されていません。</p>
+
+        <div class="tax-result-box">
+          <p class="tax-result-box__label" id="assetDepTotalLabel">2025年の減価償却費合計</p>
+          <p class="tax-result-box__value" id="assetDepTotal">¥0</p>
+        </div>
+      </section>
+
+      <!-- 帳票作成 -->
+      <section class="tax-view" id="view-docs" data-view="docs" hidden>
+        <h2 class="tax-view__title">帳票作成</h2>
+        <p class="tax-view__desc" id="docsDesc">青色申告向けの帳票をプレビュー・印刷できます。</p>
+
+        <label class="tax-field tax-field--inline">
+          <span>対象の年</span>
+          <select id="docsYear" class="tax-select"></select>
+        </label>
+
+        <div class="tax-doc-cards" id="docCardList"></div>
+
+        <div class="tax-actions tax-actions--stack">
+          <button type="button" class="tax-btn tax-btn--primary" id="exportCsvBtn">経理データCSV</button>
+          <button type="button" class="tax-btn tax-btn--ghost" id="exportCsvAllBtn">全期間CSV</button>
+        </div>
+
+        <p class="tax-disclaimer">
+          帳票は申告準備用のたたき台です。正式な申告前に税理士への相談をおすすめします。
+        </p>
+      </section>
+
+      <!-- 月別一覧 -->
+      <section class="tax-view" id="view-list" data-view="list" hidden>
+        <h2 class="tax-view__title">月別一覧</h2>
+        <label class="tax-field tax-field--inline">
+          <span>表示する年</span>
+          <select id="listYear" class="tax-select"></select>
+        </label>
+        <div class="tax-table-wrap">
+          <table class="tax-table">
+            <thead>
+              <tr>
+                <th>月</th>
+                <th>売上</th>
+                <th>経費計</th>
+                <th>レシート</th>
+                <th>利益</th>
+              </tr>
+            </thead>
+            <tbody id="monthListBody"></tbody>
+          </table>
+        </div>
+        <p class="tax-empty" id="listEmpty" hidden>まだデータがありません。</p>
+      </section>
+
+      <!-- 年間まとめ -->
+      <section class="tax-view" id="view-year" data-view="year" hidden>
+        <h2 class="tax-view__title">年間まとめ</h2>
+        <label class="tax-field tax-field--inline">
+          <span>対象の年</span>
+          <select id="summaryYear" class="tax-select"></select>
+        </label>
+
+        <dl class="tax-summary">
+          <div class="tax-summary__row">
+            <dt>年間の売上</dt>
+            <dd id="yearSales">¥0</dd>
+          </div>
+          <div class="tax-summary__row">
+            <dt>年間の経費</dt>
+            <dd id="yearCosts">¥0</dd>
+          </div>
+          <div class="tax-summary__row">
+            <dt>うちレシート登録分</dt>
+            <dd id="yearReceiptTotal">¥0</dd>
+          </div>
+          <div class="tax-summary__row">
+            <dt>減価償却費</dt>
+            <dd id="yearDepreciation">¥0</dd>
+          </div>
+          <div class="tax-summary__row tax-summary__row--accent">
+            <dt>年間の利益</dt>
+            <dd id="yearProfit">¥0</dd>
+          </div>
+        </dl>
+
+        <div class="tax-tax-box">
+          <h3 class="tax-tax-box__title">税金のざっくり目安</h3>
+          <p class="tax-tax-box__note" id="yearTaxNote">※実際の金額は控除や家族構成などで変わります。</p>
+          <dl class="tax-summary tax-summary--compact">
+            <div class="tax-summary__row">
+              <dt>所得税の目安</dt>
+              <dd id="yearIncomeTax">¥0</dd>
+            </div>
+            <div class="tax-summary__row">
+              <dt>住民税の目安</dt>
+              <dd id="yearResidentTax">¥0</dd>
+            </div>
+            <div class="tax-summary__row tax-summary__row--warn">
+              <dt>合計の目安</dt>
+              <dd id="yearTotalTax">¥0</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </main>
+
+    <footer class="tax-footer">
+      <p>志村運送｜個人事業主向け 確定申告サポート</p>
+    </footer>
+  </div>
+
+  <!-- 帳票プレビュー -->
+  <div class="tax-doc-modal" id="docModal" hidden>
+    <div class="tax-doc-modal__bar">
+      <button type="button" class="tax-doc-modal__close" id="closeDocModal">閉じる</button>
+      <button type="button" class="tax-btn tax-btn--primary tax-doc-modal__print" id="printDocBtn">印刷・PDF保存</button>
+    </div>
+    <div class="tax-doc-modal__body" id="docModalBody"></div>
+  </div>
+
+  <script src="tax-app.js"></script>
+</body>
+</html>

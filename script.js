@@ -59,6 +59,20 @@
 
   var nav = document.getElementById("nav");
   var hero = document.getElementById("hero");
+  var pageLoadTime = Date.now();
+
+  var GA_SECTIONS = [
+    { id: "hero", event: "section_view_hero" },
+    { id: "income", event: "section_view_income" },
+    { id: "reasons", event: "section_view_benefits" },
+    { id: "flow", event: "section_view_job" },
+    { id: "tax-app", event: "section_view_app" },
+    { id: "faq", event: "section_view_faq" },
+    { id: "booking", event: "section_view_form" },
+  ];
+
+  var gaScrollMarks = { 25: false, 50: false, 75: false, 90: false };
+  var gaSectionFired = {};
 
   var META_HOOKS = {
     family: {
@@ -110,12 +124,121 @@
     window.open(LINE_URL, "_blank", "noopener,noreferrer");
   }
 
-  function trackGaEvent(action, label) {
+  function ga4Event(name, params) {
     if (typeof window.gtag !== "function") return;
-    window.gtag("event", action, {
-      event_category: "lp_cta",
-      event_label: label,
-      value: 1,
+    window.gtag("event", name, params || {});
+  }
+
+  function getScrollPercent() {
+    var doc = document.documentElement;
+    var scrollTop = window.scrollY || doc.scrollTop || 0;
+    var scrollHeight = doc.scrollHeight - doc.clientHeight;
+    if (scrollHeight <= 0) return 0;
+    return Math.min(100, Math.round((scrollTop / scrollHeight) * 100));
+  }
+
+  function getTimeOnPageSeconds() {
+    return Math.round((Date.now() - pageLoadTime) / 1000);
+  }
+
+  function getVisibleSectionName() {
+    var mid = window.scrollY + window.innerHeight * 0.4;
+    var bestId = "hero";
+    var bestDist = Infinity;
+    GA_SECTIONS.forEach(function (s) {
+      var el = document.getElementById(s.id);
+      if (!el) return;
+      var top = el.offsetTop;
+      var bottom = top + el.offsetHeight;
+      if (mid >= top && mid <= bottom) {
+        bestId = s.id;
+        bestDist = -1;
+        return;
+      }
+      if (bestDist >= 0) {
+        var center = top + el.offsetHeight / 2;
+        var dist = Math.abs(mid - center);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestId = s.id;
+        }
+      }
+    });
+    return bestId;
+  }
+
+  function trackScrollDepth() {
+    var pct = getScrollPercent();
+    [25, 50, 75, 90].forEach(function (mark) {
+      if (!gaScrollMarks[mark] && pct >= mark) {
+        gaScrollMarks[mark] = true;
+        ga4Event("scroll_" + mark, {
+          scroll_percent: mark,
+          time_on_page_seconds: getTimeOnPageSeconds(),
+        });
+      }
+    });
+  }
+
+  function initGaSectionViews() {
+    if (!("IntersectionObserver" in window)) return;
+
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          var id = entry.target.id;
+          var section = GA_SECTIONS.find(function (s) { return s.id === id; });
+          if (!section || gaSectionFired[section.event]) return;
+          gaSectionFired[section.event] = true;
+          ga4Event(section.event, {
+            section_id: id,
+            scroll_percent: getScrollPercent(),
+            time_on_page_seconds: getTimeOnPageSeconds(),
+          });
+          io.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.25, rootMargin: "0px 0px -5% 0px" }
+    );
+
+    GA_SECTIONS.forEach(function (s) {
+      var el = document.getElementById(s.id);
+      if (el) io.observe(el);
+    });
+  }
+
+  function trackInterviewClick(source) {
+    ga4Event("interview_click", {
+      click_source: source,
+      scroll_percent: getScrollPercent(),
+      visible_section: getVisibleSectionName(),
+      time_on_page_seconds: getTimeOnPageSeconds(),
+    });
+  }
+
+  function trackFloatingLineClick() {
+    ga4Event("floating_line_click", {
+      scroll_percent: getScrollPercent(),
+      visible_section: getVisibleSectionName(),
+      time_on_page_seconds: getTimeOnPageSeconds(),
+    });
+  }
+
+  function trackLineClick(source) {
+    ga4Event("line_click", {
+      click_source: source,
+      scroll_percent: getScrollPercent(),
+      visible_section: getVisibleSectionName(),
+      time_on_page_seconds: getTimeOnPageSeconds(),
+    });
+  }
+
+  function trackTaxAppClick() {
+    ga4Event("tax_app_click", {
+      scroll_percent: getScrollPercent(),
+      visible_section: getVisibleSectionName(),
+      time_on_page_seconds: getTimeOnPageSeconds(),
     });
   }
 
@@ -605,6 +728,7 @@
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
+      trackInterviewClick("form_submit");
       sendToLine(false);
     });
 
@@ -628,18 +752,21 @@
       }
       a.addEventListener("click", function (e) {
         if (a.id === "ctaRailLineBtn") {
-          trackGaEvent("click_line_consult", "LINE");
-        }
-        if (a.id === "taxAppConsultBtn") {
-          trackGaEvent("click_taxapp_consult", "無料で相談する");
+          trackFloatingLineClick();
+        } else {
+          var source = a.id || a.className || "line_body";
+          if (a.classList.contains("btn--line-hero")) source = "hero_line";
+          if (a.classList.contains("btn--line-prominent")) source = "finale_line";
+          trackLineClick(source);
         }
         e.preventDefault();
         openLine();
       });
     });
 
-    function goApply(e) {
+    function goApply(e, source) {
       e.preventDefault();
+      trackInterviewClick(source);
       scrollToBooking();
     }
 
@@ -647,33 +774,63 @@
       var btn = document.getElementById(id);
       if (btn) {
         btn.setAttribute("href", "#booking");
-        btn.addEventListener("click", goApply);
+        btn.addEventListener("click", function (e) {
+          goApply(e, id);
+        });
       }
     });
 
     document.querySelectorAll(".mobile-apply").forEach(function (a) {
       a.setAttribute("href", "#booking");
-      a.addEventListener("click", goApply);
+      a.addEventListener("click", function (e) {
+        goApply(e, "mobile_apply");
+      });
     });
 
     document.querySelectorAll(".nav__cta").forEach(function (a) {
+      if (["applyBtn", "applyBtnMid", "applyBtnFooter"].indexOf(a.id) !== -1) return;
+      if (a.closest && a.closest("#ctaRail")) return;
       a.addEventListener("click", function (e) {
         var href = a.getAttribute("href");
         if (href === "#booking" || href === "#finale") {
           e.preventDefault();
+          var source = a.id || (a.classList.contains("header__cta") ? "header_cta" : "nav_cta");
+          trackInterviewClick(source);
           scrollToBooking();
         }
       });
     });
+
+    var railBooking = document.querySelector("#ctaRail .btn--primary");
+    if (railBooking) {
+      railBooking.addEventListener("click", function (e) {
+        var href = railBooking.getAttribute("href");
+        if (href === "#booking") {
+          e.preventDefault();
+          trackInterviewClick("floating_booking");
+          scrollToBooking();
+        }
+      });
+    }
+
+    var taxCta = document.querySelector(".tax-app__cta");
+    if (taxCta) {
+      taxCta.addEventListener("click", function () {
+        trackTaxAppClick();
+      });
+    }
   }
 
-  function initGaButtonTracking() {}
+  function initGaTracking() {
+    initGaSectionViews();
+  }
 
   function onScroll() {
     var y = window.scrollY || 0;
     if (nav) nav.classList.toggle("is-scrolled", y > 24);
     updateConvPath();
     updateCtaRail();
+    trackScrollDepth();
   }
 
   window.addEventListener("scroll", onScroll, { passive: true });
@@ -698,7 +855,7 @@
     initRegional();
     initBookingForm();
     initLinks();
-    initGaButtonTracking();
+    initGaTracking();
     onScroll();
     if (hero) {
       requestAnimationFrame(function () {

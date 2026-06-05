@@ -1,0 +1,1103 @@
+/* 志村運送 LP と統一 — 黒背景・白文字・ネオンブルー */
+
+:root {
+  --navy-950: #040d1a;
+  --navy-900: #071528;
+  --navy-800: #0c2340;
+  --neon: #4d9fff;
+  --neon-soft: rgba(77, 159, 255, 0.45);
+  --neon-glow: rgba(77, 159, 255, 0.25);
+  --white: #ffffff;
+  --muted: rgba(255, 255, 255, 0.72);
+  --border: rgba(77, 159, 255, 0.28);
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --font: "DM Sans", "Noto Sans JP", "Hiragino Sans", sans-serif;
+  --font-display: "Syne", "Noto Sans JP", sans-serif;
+  --header-h: 56px;
+  --nav-h: 52px;
+  --radius: 12px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--white);
+  background: var(--navy-950);
+  padding-bottom: calc(1.5rem + var(--safe-bottom));
+}
+
+.tax-app__bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% -5%, var(--neon-glow), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(43, 125, 233, 0.12), transparent),
+    linear-gradient(180deg, var(--navy-950) 0%, var(--navy-900) 50%, #0a1628 100%);
+}
+
+.tax-header,
+.tax-nav,
+.tax-main,
+.tax-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.tax-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(4, 13, 26, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+.tax-header__back {
+  font-size: 0.8rem;
+  color: var(--neon);
+  text-decoration: none;
+}
+
+.tax-header__back:hover {
+  text-decoration: underline;
+}
+
+.tax-header__brand {
+  text-align: right;
+}
+
+.tax-header__logo {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+
+.tax-header__sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.tax-header__settings {
+  padding: 0.35rem 0.5rem;
+  font-size: 1.1rem;
+  color: var(--neon);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Nav */
+.tax-nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 21, 40, 0.85);
+  scrollbar-width: none;
+}
+
+.tax-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.tax-nav__btn {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.tax-nav__btn:hover {
+  color: var(--white);
+}
+
+.tax-nav__btn.is-active {
+  color: var(--white);
+  background: rgba(77, 159, 255, 0.15);
+  border-color: var(--neon-soft);
+}
+
+/* Main */
+.tax-main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+}
+
+.tax-view[hidden] {
+  display: none !important;
+}
+
+.tax-view.is-active {
+  display: block;
+}
+
+.tax-hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 5vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 0.5rem;
+}
+
+.tax-hero__lead {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.tax-view__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.tax-view__desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+/* Cards */
+.tax-cards {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.tax-card {
+  padding: 1rem 1.15rem;
+  background: rgba(12, 35, 64, 0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tax-card--highlight {
+  border-color: var(--neon);
+  box-shadow: 0 0 24px var(--neon-glow);
+}
+
+.tax-card__label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.tax-card__value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--neon);
+}
+
+.tax-card__value--sm {
+  font-size: 1.35rem;
+}
+
+/* Buttons */
+.tax-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.tax-actions--stack {
+  margin-top: 1.5rem;
+}
+
+.tax-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.tax-btn--primary {
+  color: var(--navy-950);
+  background: var(--white);
+  box-shadow: 0 4px 20px rgba(77, 159, 255, 0.35);
+}
+
+.tax-btn--primary:hover {
+  transform: translateY(-1px);
+}
+
+.tax-btn--ghost {
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.tax-btn--danger {
+  color: var(--danger);
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.tax-note,
+.tax-disclaimer {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.tax-disclaimer {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+/* Form */
+.tax-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tax-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tax-field--inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.tax-field span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tax-input,
+.tax-select {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--white);
+  background: rgba(4, 13, 26, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.tax-input:focus,
+.tax-select:focus {
+  outline: none;
+  border-color: var(--neon);
+  box-shadow: 0 0 0 3px var(--neon-glow);
+}
+
+.tax-select {
+  max-width: 140px;
+}
+
+.tax-field--inline .tax-select {
+  flex: 0 0 auto;
+}
+
+.tax-result-box {
+  padding: 1rem;
+  text-align: center;
+  background: rgba(77, 159, 255, 0.1);
+  border: 1px solid var(--neon-soft);
+  border-radius: var(--radius);
+}
+
+.tax-result-box__label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.tax-result-box__value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--neon);
+  margin: 0.25rem 0;
+}
+
+.tax-result-box__hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.tax-form__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.tax-save-msg {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--neon);
+}
+
+.tax-save-msg.is-error {
+  color: var(--danger);
+}
+
+/* Table */
+.tax-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.tax-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.tax-table th,
+.tax-table td {
+  padding: 0.65rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tax-table th:first-child,
+.tax-table td:first-child {
+  text-align: left;
+}
+
+.tax-table th {
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(12, 35, 64, 0.5);
+}
+
+.tax-table tr:last-child td {
+  border-bottom: none;
+}
+
+.tax-table .has-data td {
+  color: var(--white);
+}
+
+.tax-table .profit-positive {
+  color: var(--neon);
+  font-weight: 700;
+}
+
+.tax-table__sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.tax-empty {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--muted);
+  padding: 1.5rem;
+}
+
+/* Summary */
+.tax-summary {
+  margin-bottom: 1.25rem;
+}
+
+.tax-summary__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tax-summary__row dt {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.tax-summary__row dd {
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tax-summary__row--accent dd {
+  font-size: 1.35rem;
+  color: var(--neon);
+}
+
+.tax-summary__row--warn dd {
+  color: var(--warn);
+}
+
+.tax-tax-box {
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: rgba(12, 35, 64, 0.45);
+  border: 1px solid var(--border);
+}
+
+.tax-tax-box__title {
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.tax-tax-box__note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.tax-summary--compact .tax-summary__row {
+  padding: 0.55rem 0;
+}
+
+/* Filing list */
+.tax-filing-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tax-filing-item {
+  padding: 1rem;
+  background: rgba(12, 35, 64, 0.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tax-filing-item--main {
+  border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow);
+}
+
+.tax-filing-item__name {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.tax-filing-item__val {
+  font-size: 1.35rem;
+  color: var(--neon);
+}
+
+.tax-filing-item__sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+.tax-footer {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
+/* レシート読取 */
+.tax-select--full {
+  max-width: none;
+}
+
+#receiptForm.is-image-loaded {
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--neon-soft);
+  background: rgba(77, 159, 255, 0.06);
+  scroll-margin-top: calc(var(--header-h) + var(--nav-h) + 0.5rem);
+}
+
+.tax-upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.tax-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 88px;
+  padding: 0.85rem 0.5rem;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+  background: rgba(12, 35, 64, 0.45);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.tax-upload-btn:active {
+  transform: scale(0.98);
+}
+
+.tax-upload-btn:hover {
+  border-color: var(--neon);
+  background: rgba(77, 159, 255, 0.08);
+}
+
+.tax-upload-btn--camera {
+  border-style: solid;
+  border-color: var(--neon-soft);
+}
+
+.tax-upload-btn__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.tax-upload-btn__text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tax-receipt-preview {
+  margin-bottom: 1rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(4, 13, 26, 0.6);
+}
+
+.tax-receipt-preview__img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background: #000;
+}
+
+.tax-receipt-preview__clear {
+  display: block;
+  width: 100%;
+  padding: 0.55rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.tax-receipt-hint {
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--neon);
+  background: rgba(77, 159, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid var(--neon-soft);
+}
+
+.tax-receipt-history {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.tax-receipt-history__title {
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.tax-receipt-history .tax-field--inline {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tax-receipt-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.tax-receipt-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(12, 35, 64, 0.55);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.tax-receipt-item__main {
+  grid-column: 1;
+}
+
+.tax-receipt-item__date {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.tax-receipt-item__payee {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.tax-receipt-item__meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.tax-receipt-item__amount {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-weight: 800;
+  color: var(--neon);
+  white-space: nowrap;
+}
+
+.tax-receipt-item__del {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0.25rem 0;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.tax-receipt-month-summary {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(77, 159, 255, 0.06);
+}
+
+.tax-receipt-month-summary__title {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+.tax-receipt-month-summary__val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--neon);
+}
+
+/* 起動画面 */
+.tax-startup {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(4, 13, 26, 0.97);
+  overflow-y: auto;
+}
+
+.tax-startup[hidden] {
+  display: none !important;
+}
+
+.tax-startup__panel {
+  width: 100%;
+  max-width: 420px;
+  padding: 1.5rem 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--neon-soft);
+  background: rgba(12, 35, 64, 0.85);
+  box-shadow: 0 0 40px var(--neon-glow);
+}
+
+.tax-startup__logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--neon);
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.tax-startup__title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.tax-startup__lead {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+}
+
+.tax-startup__choices {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.tax-choice-card {
+  display: block;
+  cursor: pointer;
+}
+
+.tax-choice-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tax-choice-card__box {
+  display: block;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(4, 13, 26, 0.5);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.tax-choice-card input:checked + .tax-choice-card__box {
+  border-color: var(--neon);
+  background: rgba(77, 159, 255, 0.12);
+  box-shadow: 0 0 16px var(--neon-glow);
+}
+
+.tax-choice-card__title {
+  display: block;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.tax-choice-card__desc {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.tax-startup__profile {
+  margin-top: 0.5rem;
+}
+
+.tax-app-shell[hidden] {
+  display: none !important;
+}
+
+/* 自動仕分けヒント */
+.tax-auto-cat {
+  margin-bottom: 1rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--warn);
+  background: rgba(251, 191, 36, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+/* 固定資産 */
+.tax-asset-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 1rem 0;
+}
+
+.tax-asset-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  padding: 0.85rem;
+  background: rgba(12, 35, 64, 0.55);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.tax-asset-item__name {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.tax-asset-item__meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.tax-asset-item__dep {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  text-align: right;
+  font-weight: 800;
+  color: var(--neon);
+}
+
+.tax-asset-item__dep span {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.tax-table__foot td {
+  font-weight: 700;
+  color: var(--neon);
+  background: rgba(77, 159, 255, 0.08);
+}
+
+/* 帳票カード */
+.tax-doc-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.tax-doc-card {
+  padding: 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(12, 35, 64, 0.5);
+}
+
+.tax-doc-card__title {
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.tax-doc-card__desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.65rem;
+}
+
+.tax-doc-card__btn {
+  min-height: 42px;
+}
+
+/* 帳票モーダル */
+.tax-doc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  background: rgba(4, 13, 26, 0.95);
+}
+
+.tax-doc-modal[hidden] {
+  display: none !important;
+}
+
+body.doc-modal-open {
+  overflow: hidden;
+}
+
+.tax-doc-modal__bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 21, 40, 0.95);
+}
+
+.tax-doc-modal__close {
+  flex: 1;
+  min-height: 44px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tax-doc-modal__print {
+  flex: 1;
+  min-height: 44px;
+}
+
+.tax-doc-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 帳票プレビュー内 */
+.pdoc {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1rem;
+  color: var(--white);
+  background: rgba(12, 35, 64, 0.6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pdoc__title {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  color: var(--neon);
+}
+
+.pdoc-meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.pdoc-lead {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.pdoc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.pdoc-table th,
+.pdoc-table td {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.pdoc-table .num {
+  text-align: right;
+  font-weight: 600;
+}
+
+.pdoc-table .total th,
+.pdoc-table .total td {
+  background: rgba(77, 159, 255, 0.1);
+  font-weight: 700;
+}
+
+.pdoc-table .accent th,
+.pdoc-table .accent td {
+  background: rgba(77, 159, 255, 0.18);
+  color: var(--neon);
+  font-weight: 800;
+}
+
+.pdoc-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.75rem;
+}
+
+.pdoc-cols {
+  display: grid;
+  gap: 1rem;
+}
+
+.pdoc-cols h2 {
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: var(--neon);
+}
+
+@media (min-width: 600px) {
+  .tax-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pdoc-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tax-nav__btn {
+    font-size: 0.82rem;
+    padding: 0.55rem 1rem;
+  }
+
+  .tax-upload-grid {
+    gap: 0.85rem;
+  }
+
+  .tax-upload-btn {
+    min-height: 96px;
+  }
+}
